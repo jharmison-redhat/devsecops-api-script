@@ -11,8 +11,11 @@ import sys
 @dso_nexus.command(name='add-user', epilog=opts.add_users_epilog)
 @opts.default_opts
 @opts.add_users_opt
+@click.option('--roles', '-r', required=False,
+              help=('the roles to assign to all users created'
+                    '(separate multiples with commas)'))
 def dso_nexus_add_user(url, login_username, login_password, verbose, usernames,
-                       passwords):
+                       passwords, roles):
     """Add users to the Nexus instance specified by URL"""
     exit_code = 0
     with nexus.Nexus(
@@ -23,7 +26,12 @@ def dso_nexus_add_user(url, login_username, login_password, verbose, usernames,
             if api.search_users(username):
                 print(f'{username} ok')
                 continue
-            new_user = api.add_user(username, password)
+
+            if roles is not None:
+                new_user = api.add_user(username, password, roles.split(','))
+            else:
+                new_user = api.add_user(username, password)
+
             if new_user is not None:
                 print(f'{username} added')
             else:
@@ -108,4 +116,26 @@ def dso_nexus_add_repo(url, login_username, login_password, verbose,
     for repo, error in errors.items():
         sys.stderr.write(f'Error adding {repo}:\n{error}\n')
     sys.stderr.flush
+    exit(exit_code)
+
+
+@dso_nexus.command(name='change-password')
+@opts.default_opts
+@opts.change_pw_opt
+def dso_nexus_change_pw(url, login_username, login_password, verbose,
+                        usernames, passwords):
+    """Change the password of users on the Nexus instance specified by URL"""
+    exit_code = 0
+    with nexus.Nexus(
+        url, login_username, login_password, verbosity=verbose
+    ) as api:
+        for username, password in zip(usernames.split(','),
+                                      passwords.split(',')):
+            response = api.change_password(username, password)
+            pprint(response.text)
+            pprint(response.status_code)
+            if response is not None:
+                print(f'{username} changed')
+            else:
+                print(f'{username} failed')
     exit(exit_code)

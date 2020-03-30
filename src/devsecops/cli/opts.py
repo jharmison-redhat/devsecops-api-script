@@ -35,6 +35,19 @@ def add_users_opt(f):
     return f
 
 
+def change_pw_opt(f):
+    for option in reversed([
+        click.option('--usernames', '-u', required=True,
+                     help=('usernames to change the password of '
+                           '(separate multiples with commas)')),
+        click.option('--passwords', '-p', required=True,
+                     help=('passwords to set for the usernames provided '
+                           '(separate multiples with commas)'))
+    ]):
+        f = option(f)
+    return f
+
+
 def new_login_pw_opt(f):
     return click.option('--new-login-password', '-N', required=False,
                         help='a new password for the login user')(f)

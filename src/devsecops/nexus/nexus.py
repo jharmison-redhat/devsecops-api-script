@@ -51,7 +51,7 @@ class Nexus(BaseApiHandler):
         self.session.close()
 
     def add_user(self, username: str = None,
-                 password: str = None) -> requests.Response:
+                 password: str = None, roles: list = []) -> requests.Response:
         """
         Add a user to the Nexus instance, returning None if no user was created
         """
@@ -62,7 +62,7 @@ class Nexus(BaseApiHandler):
             'password': password,
             'emailAddress': f'{username}@example.com',
             'status': 'active',
-            'roles': ['nx-admin']
+            'roles': roles
         }
         try:
             return self.api_req('post', 'beta/security/users', data)
@@ -84,6 +84,19 @@ class Nexus(BaseApiHandler):
         return json.loads(
             self.api_req('get', f'beta/security/users?userId={username}').text
         )
+
+    def change_password(self, username: str = None,
+                        password: str = None) -> requests.Response:
+        """
+        Changes the password for a given username to the provided password
+        """
+        self.session.headers.update({'Content-type': 'text/plain'})
+        ret_val =  self.session.put(
+            f'{self.url}/beta/security/users/{username}/change-password',
+            data=password
+        )
+        self.session.headers.update({'Content-type': 'application/json'})
+        return ret_val
 
     def list_repos(self) -> list:
         """
